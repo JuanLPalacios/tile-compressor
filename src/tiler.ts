@@ -53,7 +53,7 @@ tileCanvasb.width = 8;
 tileCanvasb.height = 8;
 var ctxb = tileCanvasb.getContext("2d");
 
-const d = function (a, b) {
+const distance = function (a, b) {
   ctxa.putImageData(a.tileData, 0, 0);
   ctxb.putImageData(b.tileData, 0, 0);
 
@@ -115,44 +115,46 @@ const consolidate = function (cluster) {
   return tile
 }
 
-export function reduceTiles(tiles) {
+export function MBSAS(tiles) {
+  // my targget number of clusters
   let k = 192;
 
-  let B = Object.values(tiles);
-  let h = B[0];
-  for (let x = 0; x < k; x++) {
-    let dx = 0;
-    let cx = h;
-    let index = 0
-    let Bjx = B[0];
-    for (let j = 0; j < B.length; j++) {
-      const Bj = B[j];
-      const BjMap = Object.values(Bj);
+  let points = Object.values(tiles);//original set
+  let currentClusterCenter = points[0];// select a random point
+  for (let x = 0; x < k; x++) {//untill k is met
+    let maxDistanceFromLastCluster = 0;
+    let lastClusterCenter = currentClusterCenter;
+    let selectedFardestPointIndex = 0
+    let Bjx = points[0];
+    // from all not currently cluster centers
+    for (let j = 0; j < points.length; j++) {
+      const currentPoint = points[j];
+      const BjMap = Object.values(currentPoint);
       for (let i = 0; i < BjMap.length; i++) {
         const BjMapi = BjMap[i];
-        const ci = Bj[BjMapi];
-        const di = d(ci, Bj[BjMap[0]])
-        if (di > dx) {
-          dx = di;
-          cx = ci
-          index = BjMapi
-          Bjx = Bj;
+        const ci = currentPoint[BjMapi];
+        const di = distance(ci, currentPoint[BjMap[0]])
+        if (di > maxDistanceFromLastCluster) {
+          maxDistanceFromLastCluster = di;
+          lastClusterCenter = ci
+          selectedFardestPointIndex = BjMapi
+          Bjx = currentPoint;
         }
       }
     }
     let Bx = {};
-    B.push(Bx)
-    delete Bjx[index];
-    Bx[index] = cx;
-    h = cx;
-    for (let j = 0; j < B.length; j++) {
-      const Bj = B[j];
+    points.push(Bx)
+    delete Bjx[selectedFardestPointIndex];
+    Bx[selectedFardestPointIndex] = lastClusterCenter;
+    currentClusterCenter = lastClusterCenter;
+    for (let j = 0; j < points.length; j++) {
+      const Bj = points[j];
       const BjMap = Object.values(Bj);
       for (let i = 0; i < BjMap.length; i++) {
         const BjMapi = BjMap[i];
         const ci = Bj[BjMapi];
-        const di = d(ci, Bj[BjMap[0]])
-        if (di > d(ci, h)) {
+        const di = distance(ci, Bj[BjMap[0]])
+        if (di > distance(ci, currentClusterCenter)) {
           delete Bj[BjMapi];
           Bx[BjMapi] = ci;
         }
@@ -161,8 +163,8 @@ export function reduceTiles(tiles) {
   }
   tiles = {};
   let uuid = 0;
-  for (let y = 0; y < B.length; y += 1) {
-    const cluster = B[y];
+  for (let y = 0; y < points.length; y += 1) {
+    const cluster = points[y];
     const tile = consolidate(cluster);
     const index = tile.tileData.data.toString();
     tiles[index] = { ...tile, uuid: uuid++ };
