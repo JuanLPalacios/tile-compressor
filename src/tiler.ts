@@ -115,15 +115,38 @@ const consolidate = function (cluster) {
   return tile
 }
 
-export function MBSAS(tiles) {
+
+export const rgbToHsv = ([r, g, b]:[number,number,number] ) => {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const v = Math.max(r,g,b);
+  const min = Math.min(r,g,b);
+  let d = v-min;
+  let s = (v == 0) ? 0 : d / v;
+  let h = 0;
+  if(v !== min){
+    switch(v){
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h, s, v];
+};
+
+
+export function MBSAS(tiles:Map<string,ITile>) {
   // my targget number of clusters
   let k = 192;
 
-  let points = Object.values(tiles);//original set
-  let currentClusterCenter = points[0];// select a random point
+  let points = <ITile[]>Object.values(tiles);//original set
+  let center = points[0];// select a random point
+
   for (let x = 0; x < k; x++) {//untill k is met
     let maxDistanceFromLastCluster = 0;
-    let lastClusterCenter = currentClusterCenter;
+    let lastClusterCenter = center;
     let selectedFardestPointIndex = 0
     let Bjx = points[0];
     // from all not currently cluster centers
@@ -146,7 +169,7 @@ export function MBSAS(tiles) {
     points.push(Bx)
     delete Bjx[selectedFardestPointIndex];
     Bx[selectedFardestPointIndex] = lastClusterCenter;
-    currentClusterCenter = lastClusterCenter;
+    center = lastClusterCenter;
     for (let j = 0; j < points.length; j++) {
       const Bj = points[j];
       const BjMap = Object.values(Bj);
@@ -154,7 +177,7 @@ export function MBSAS(tiles) {
         const BjMapi = BjMap[i];
         const ci = Bj[BjMapi];
         const di = distance(ci, Bj[BjMap[0]])
-        if (di > distance(ci, currentClusterCenter)) {
+        if (di > distance(ci, center)) {
           delete Bj[BjMapi];
           Bx[BjMapi] = ci;
         }
