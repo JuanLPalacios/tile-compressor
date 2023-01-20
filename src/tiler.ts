@@ -127,7 +127,7 @@ export const rgbToHsv = ([r, g, b]:[number,number,number] ) => {
   let h = 0;
   if(v !== min){
     switch(v){
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case r: h = (g - b) / d + ((g < b) ? 6 : 0); break;
       case g: h = (b - r) / d + 2; break;
       case b: h = (r - g) / d + 4; break;
     }
@@ -136,6 +136,11 @@ export const rgbToHsv = ([r, g, b]:[number,number,number] ) => {
   return [h, s, v];
 };
 
+export const hsvDistance = ([h1, s1, v1]:[number,number,number], [h2, s2, v2]:[number,number,number] ) => {
+  return ( Math.sin(h1)*s1*v1 - Math.sin(h2)*s2*v2 )^2
+  + ( Math.cos(h1)*s1*v1 - Math.cos(h2)*s2*v2 )**2
+  + ( v1 - v2 )**2;
+};
 
 export function MBSAS(tiles:Map<string,ITile>) {
   // my targget number of clusters
