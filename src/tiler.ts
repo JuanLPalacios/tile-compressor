@@ -6,6 +6,7 @@ export interface ITile {
   }[],
   tileData: ImageData,
   times: number,
+  vector: number[],
   uuid: number
 }
 
@@ -140,6 +141,18 @@ export const hsvDistance = ([h1, s1, v1]:[number,number,number], [h2, s2, v2]:[n
   return ( Math.sin(h1)*s1*v1 - Math.sin(h2)*s2*v2 )^2
   + ( Math.cos(h1)*s1*v1 - Math.cos(h2)*s2*v2 )**2
   + ( v1 - v2 )**2;
+};
+
+export const rgbToYuv = ([r, g, b]:[number,number,number] ) => {
+  const 
+  y = 0.299*r + 0.587*g + 0.114*b,
+  u = -0.14713*r - 0.288862*g + 0.436*b,
+  v = 0.615*r - 0.51498*g - 0.10001*b;
+  return [y, u, v];
+};
+
+export const euclideanDistance = (v1:number[], v2:number[] ) => {
+  return Math.sqrt(v1.reduce((total, x1, i)=>total+( x1 - v2[i] )**2, 0));
 };
 
 export function MBSAS(tiles:Map<string,ITile>) {
