@@ -155,6 +155,59 @@ export const euclideanDistance = (v1:number[], v2:number[] ) => {
   return Math.sqrt(v1.reduce((total, x1, i)=>total+( x1 - v2[i] )**2, 0));
 };
 
+export const KMeansPlusPlus = (points:ITile[], k:number) => {
+  var centroids:number[][] = [];
+  var clusters:ITile[][] = new Array(points.length);
+  var visited = new Array(points.length).fill(false);
+
+  // Randomly choose the first centroid
+  var randomIndex = Math.floor(Math.random() * points.length);
+  centroids.push(points[randomIndex].vector);
+  visited[randomIndex] = true;
+
+  // Select the remaining k-1 centroids
+  for (var i = 1; i < k; i++) {
+      var distances = [];
+      for (var j = 0; j < points.length; j++) {
+          if (visited[j]) continue;
+
+          var minDistance = Number.MAX_VALUE;
+          for (var c = 0; c < centroids.length; c++) {
+              var distance = euclideanDistance(points[j].vector, centroids[c]);
+              if (distance < minDistance) {
+                  minDistance = distance;
+              }
+          }
+          distances.push([j, minDistance]);
+      }
+
+      // Select the next centroid based on the minimum distance to the closest centroid
+      distances.sort(function(a, b) { return b[1] - a[1] });
+      var nextCentroidIndex = distances[0][0];
+      centroids.push(points[nextCentroidIndex].vector);
+      visited[nextCentroidIndex] = true;
+  }
+
+  // Assign each point to the closest centroid
+  for (var i = 0; i < points.length; i++) {
+      var minDistance = Number.MAX_VALUE;
+      var closestCentroid;
+      for (var j = 0; j < k; j++) {
+          var distance = euclideanDistance(points[i].vector, centroids[j]);
+          if (distance < minDistance) {
+              minDistance = distance;
+              closestCentroid = j;
+          }
+      }
+      if (!clusters[closestCentroid]) {
+          clusters[closestCentroid] = [];
+      }
+      clusters[closestCentroid].push(points[i]);
+  }
+
+  return clusters;
+}
+
 export function MBSAS(tiles:Map<string,ITile>) {
   // my targget number of clusters
   let k = 192;
